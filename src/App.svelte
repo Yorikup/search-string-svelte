@@ -1,4 +1,5 @@
 <script>
+	import { searchRequest } from './api';
 	import { debounce } from './utils';
 	import { onMount } from 'svelte';
 
@@ -18,7 +19,16 @@
 	}
 
 	const search = debounce(() => {
-		console.log(searchTemplate);
+		if (searchTemplate === '') return;
+
+		searchRequest(searchTemplate)
+			.then(({ data }) => {
+				foundResults = data.items.slice(0, 10);
+				showResults = true;
+			})
+			.catch(error => {
+				console.error(error);
+			})
 	}, 200);
 
 	function handleKeydown(event) {
@@ -49,13 +59,15 @@
 
 	function pickResult() {
 		if(haveResults) {
-			searchTemplate = foundResults[pickedResult];
+			searchTemplate = foundResults[pickedResult].login;
+			pickedResult = 0;
 			closeResultsPanel();
 		}
 	}
 
 	function pickFromResults(result) {
 		searchTemplate = result;
+		pickedResult = 0;
 		closeResultsPanel();
 	}
 </script>
@@ -81,9 +93,9 @@
 				>
 					<div class="search-result"
 						 class:picked="{ index === pickedResult }"
-						 on:click={pickFromResults(result)}
+						 on:click={pickFromResults(result.login)}
 					>
-						{ result }
+						{ result.login }
 					</div>
 				</div>
 			{/each}
